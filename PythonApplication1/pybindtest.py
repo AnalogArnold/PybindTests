@@ -25,24 +25,65 @@ import pyvale.dataset as dataset
 import pyvale.mooseherder as mh
 import pyvale.sensorsim as sens
 
+# 1. PASSING A FLAT NUMPY ARRAY TO C++ AND GETTING ITS ROWS BACK
+
+# data_path = dataset.render_simple_block_path() # Load sample data file with a simple rectangular block in 3D to test image rendering algorithm. Returns a file path to an exodus file
+# sim_data = mh.ExodusReader(data_path).read_all_sim_data() # Convert the simulation output into a SimData object
+# displacement_components = ("disp_x","disp_y", "disp_z")
+# # Scale the coordinates and displ. fields to mm
+# sim_data = sens.scale_length_units(scale=100.0,sim_data=sim_data,disp_comps=displacement_components)
+# fields_to_render = ("disp_y","disp_x") # Assume our fields to render are same as to display, although this code originally differentiates between the two
+# render_mesh = sens.create_render_mesh(sim_data, fields_to_render ,sim_spat_dim=3,field_disp_keys=displacement_components)
+# render_mesh.set_pos(np.array([0.0, 0.0, 0]))
+
+# connectivity = render_mesh.connectivity
+# coords = render_mesh.coords
+# node_coords = coords[connectivity,:3]
+# node_coords_flat = node_coords.reshape(node_coords.shape[0],node_coords.shape[1]*node_coords.shape[2]) # Shape to have a 2D array that can be mapped to Eigen matrix. Size is (num_elements, num_nodes_per_element*3) for triangles
+# #print(node_coords)
+# #print(node_coords_flat) 
+
+
+# from superfastcode import cpp_simdata_rows
+# print(cpp_simdata_rows(node_coords_flat))
+
+def simdata_to_mesh(pypath, field_components, fields_to_render, scale):
+    # Convert the simulation output into a SimData object
+    sim_data = mh.ExodusReader(pypath).read_all_sim_data()
+    # Scale the coordinates and displ. fields to mm
+    sim_data = sens.scale_length_units(scale=scale,sim_data=sim_data,disp_comps=field_components)
+    render_mesh = sens.create_render_mesh(sim_data, fields_to_render ,sim_spat_dim=3,field_disp_keys=field_components)
+    return render_mesh
+
+def get_mesh_data(pypath, field_components=("disp_x","disp_y", "disp_z"), fields_to_render = ("disp_y", "disp_x"), world_position = None, scale = 100.0):
+    '''Returns the mesh data as a numpy array.'''
+    render_mesh = simdata_to_mesh(data_path, field_components, fields_to_render, scale)
+    if world_position is not None:
+        render_mesh.set_pos(world_position)
+    connectivity = render_mesh.connectivity
+    coords = render_mesh.coords[:,:3]
+    #node_coords = coords[connectivity,:3]
+    x_disp_node_vals = render_mesh.fields_render[:,1, 1] # Field displacement_x at timestep 1 for all nodes. Use this for coloring somehow
+    x_disp_node_norm = (x_disp_node_vals - x_disp_node_vals.min())/(x_disp_node_vals.max()-x_disp_node_vals.min()) # Normalize displacement values, scaling them to range [0,1] so they can map to color intensities
+    # Approach 2 - taking averages and stacking them together
+    node_colors = np.column_stack((x_disp_node_norm, x_disp_node_norm, x_disp_node_norm))  # Convert each scalar to an RGB triplet
+    face_colors = np.mean(node_colors[connectivity],axis=1)  # Compute each face's colour as the average of its 3 node colours
+    # Approach 1 - using a colour map to assign an rgb value
+    # cmap = plt.get_cmap('viridis')
+    # face_colors = cmap(x_disp_node_norm)[:,:3]
+    return {"connectivity": connectivity, "coords": coords, "face_colors": face_colors}
+
+
 data_path = dataset.render_simple_block_path() # Load sample data file with a simple rectangular block in 3D to test image rendering algorithm. Returns a file path to an exodus file
-sim_data = mh.ExodusReader(data_path).read_all_sim_data() # Convert the simulation output into a SimData object
-displacement_components = ("disp_x","disp_y", "disp_z")
-# Scale the coordinates and displ. fields to mm
-sim_data = sens.scale_length_units(scale=100.0,sim_data=sim_data,disp_comps=displacement_components)
-fields_to_render = ("disp_y","disp_x") # Assume our fields to render are same as to display, although this code originally differentiates between the two
-render_mesh = sens.create_render_mesh(sim_data, fields_to_render ,sim_spat_dim=3,field_disp_keys=displacement_components)
-render_mesh.set_pos(np.array([0.0, 0.0, 0]))
+rect_block = get_mesh_data(data_path)
+rect_block2 = get_mesh_data(data_path, world_position=[-2.0, -10.0, -2.0], scale=500)
+scene = list()
+scene.append(rect_block)
+scene.append(rect_block2)
 
-connectivity = render_mesh.connectivity
-coords = render_mesh.coords
-node_coords = coords[connectivity,:3]
-node_coords_flat = node_coords.reshape(node_coords.shape[0],node_coords.shape[1]*node_coords.shape[2]) # Shape to have a 2D array that can be mapped to Eigen matrix. Size is (num_elements, num_nodes_per_element*3) for triangles
-#print(node_coords)
-#print(node_coords_flat) 
+from superfastcode import cpp_simdata_dictlist
+cpp_simdata_dictlist(scene)
 
-from superfastcode import cpp_simdata_rows
-print(cpp_simdata_rows(node_coords_flat))
 
 '''
 @dataclass(slots=True)
