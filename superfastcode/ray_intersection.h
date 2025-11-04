@@ -1,7 +1,10 @@
 #pragma once
 
-#include <vector>
 #include <array>
+#include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
+
 #include "eigen_types.h"
 #include "ray.h"
 
@@ -14,5 +17,5 @@ struct IntersectionOutput {
 EiVectorD3d cross_rowwise(const EiVectorD3d& mat1, const EiVectorD3d& mat2);
 
 IntersectionOutput intersect_plane(const Ray& ray,
-    const std::vector<std::array<int, 3>>& connectivity,
-    const std::vector<std::array<double, 3>>& node_coords);
+    const pybind11::array_t<int>& connectivity,
+    const pybind11::array_t<double>& node_coords);

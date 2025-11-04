@@ -38,11 +38,11 @@ rect_block2 = get_mesh_data(data_path, world_position=[-2.0, -10.0, -2.0], scale
 # Create and populate the scene with meshes
 scene = list()
 scene.append(rect_block)
-scene.append(rect_block2)
+#scene.append(rect_block2)
 
 # Lights - to be added later
 
 
-
 from superfastcode import cpp_simdata_dictlist
-cpp_simdata_dictlist(scene)
+with (open("image.ppm", "wb") as f):
+    f.write(cpp_simdata_dictlist(scene))

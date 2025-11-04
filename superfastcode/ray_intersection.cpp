@@ -20,10 +20,11 @@ EiVectorD3d cross_rowwise(const EiVectorD3d& mat1, const EiVectorD3d& mat2) {
 
 //IntersectionOutput intersect_plane(const Ray &ray, const double (&node_coords_arr)[44][9]) {
 IntersectionOutput intersect_plane(const Ray& ray,
-    const std::vector<std::array<int, 3>>& connectivity,
-    const std::vector<std::array<double, 3>>& node_coords) {
+    const pybind11::array_t<int>& connectivity,
+    const pybind11::array_t<double>& node_coords){
     // Declare everything on the top because else I get very confused
-    long long number_of_elements = connectivity.size(); // number of triangles, will give us indices for some bits
+    long long number_of_elements = connectivity.shape()[0];
+    //long long number_of_elements = connectivity.size(); // number of triangles, will give us indices for some bits
     // Ray data broadcasted to use in vectorised operations on matrices
     // This is faster than doing it in a loop
     EiVectorD3d ray_directions = ray.direction.replicate(number_of_elements, 1);
@@ -45,15 +46,21 @@ IntersectionOutput intersect_plane(const Ray& ray,
     };
     // Calculations - edges and normals
     for (int i = 0; i < number_of_elements; i++) {
-        int node_0 = connectivity[i][0];
-        int node_1 = connectivity[i][1];
-        int node_2 = connectivity[i][2];
+        int node_0 = connectivity.at(i, 0);
+		int node_1 = connectivity.at(i, 1);
+		int node_2 = connectivity.at(i, 2);
+        //int node_0 = connectivity[i][0];
+        //int node_1 = connectivity[i][1];
+        //int node_2 = connectivity[i][2];
         for (int j = 0; j < 3; j++) {
             //std::cout<<node_coords_arr[i][j] << " ";
-            edge0(i, j) = node_coords[node_1][j] - node_coords[node_0][j];
-            nodes0(i, j) = node_coords[node_0][j];
+			edge0(i, j) = node_coords.at(node_1, j) - node_coords.at(node_0, j);
+            //edge0(i, j) = node_coords[node_1][j] - node_coords[node_0][j];
+            //nodes0(i, j) = node_coords[node_0][j];
+			nodes0(i, j) = node_coords.at(node_0, j);
             // Skip edge1 because it never gets used in the calculations anyway
-            nEdge2(i, j) = node_coords[node_2][j] - node_coords[node_0][j];
+            //nEdge2(i, j) = node_coords[node_2][j] - node_coords[node_0][j];
+			nEdge2(i, j) = node_coords.at(node_2, j) - node_coords.at(node_0, j);
         }
     }
     plane_normals = cross_rowwise(edge0, nEdge2); // not normalised!

@@ -139,16 +139,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="camera.cpp" />
     <ClCompile Include="previouscode.cpp" />
     <ClCompile Include="ray_intersection.cpp" />
+    <ClCompile Include="render.cpp" />
     <ClCompile Include="test1.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="camera.h" />
     <ClInclude Include="eigen_types.h" />
     <ClInclude Include="hit_record.h" />
     <ClInclude Include="math_utils.h" />
     <ClInclude Include="ray.h" />
     <ClInclude Include="ray_intersection.h" />
+    <ClInclude Include="render.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
