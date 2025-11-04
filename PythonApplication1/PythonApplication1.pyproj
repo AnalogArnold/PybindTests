@@ -23,7 +23,8 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="module1.py" />
+    <Compile Include="camera.py" />
+    <Compile Include="simdata_loader.py" />
     <Compile Include="pybindtest.py" />
   </ItemGroup>
   <ItemGroup>

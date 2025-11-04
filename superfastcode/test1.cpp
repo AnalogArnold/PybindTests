@@ -40,8 +40,6 @@ void process_list_of_dicts(py::list list_of_dicts) {
 }
 
 
-
-
 // Creates a dynamic-size Eigen matrix of given shape (filled with zeros for demo)
 Eigen::MatrixXd make_eigen_matrix(int nrows, int ncols) {
     return Eigen::MatrixXd::Zero(nrows, ncols);
