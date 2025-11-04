@@ -139,9 +139,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="module.cpp" />
     <ClCompile Include="previouscode.cpp" />
+    <ClCompile Include="ray_intersection.cpp" />
     <ClCompile Include="test1.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="eigen_types.h" />
+    <ClInclude Include="hit_record.h" />
+    <ClInclude Include="math_utils.h" />
+    <ClInclude Include="ray.h" />
+    <ClInclude Include="ray_intersection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

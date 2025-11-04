@@ -44,9 +44,5 @@ scene.append(rect_block2)
 
 
 
-
-
-
-
 from superfastcode import cpp_simdata_dictlist
 cpp_simdata_dictlist(scene)
