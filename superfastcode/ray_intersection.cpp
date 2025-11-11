@@ -19,12 +19,9 @@ EiVectorD3d cross_rowwise(const EiVectorD3d& mat1, const EiVectorD3d& mat2) {
 }
 
 IntersectionOutput intersect_plane(const Ray& ray,
-    const pybind11::array_t<int>& connectivity,
-    const pybind11::array_t<double>& node_coords) {
-
-    long long number_of_elements = connectivity.shape()[0]; // number of triangles/faces, will give us indices for some bits
-	double* node_coords_ptr = static_cast<double*>(node_coords.request().ptr);
-	int* connectivity_ptr = static_cast<int*>(connectivity.request().ptr);
+    const int* connectivity_ptr,
+    const double* node_coords_ptr,
+    const long long number_of_elements) { 
 
     // Ray data broadcasted to use in vectorised operations on matrices
     // This is faster than doing it in a loop

@@ -30,7 +30,11 @@ EiVector3d return_ray_color(const Ray& ray,
         pybind11::array_t<int> connectivity = pybind11::cast<pybind11::array_t<int>>(mesh_dict["connectivity"]);
         pybind11::array_t<double> node_coords = pybind11::cast<pybind11::array_t<double>>(mesh_dict["coords"]);
 
-        IntersectionOutput intersection = intersect_plane(ray, connectivity, node_coords);
+        long long number_of_elements = connectivity.shape()[0]; // number of triangles/faces, will give us indices for some bits
+        double* node_coords_ptr = static_cast<double*>(node_coords.request().ptr);
+        int* connectivity_ptr = static_cast<int*>(connectivity.request().ptr);
+
+        IntersectionOutput intersection = intersect_plane(ray, connectivity_ptr, node_coords_ptr, number_of_elements);
         Eigen::Index minRowIndex, minColIndex;
 
         intersection.t_values.minCoeff(&minRowIndex, &minColIndex); // Find indices of the smallest t_value
