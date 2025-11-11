@@ -139,8 +139,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="camera.cpp" />
-    <ClCompile Include="previouscode.cpp" />
     <ClCompile Include="ray_intersection.cpp" />
     <ClCompile Include="render.cpp" />
     <ClCompile Include="test1.cpp" />

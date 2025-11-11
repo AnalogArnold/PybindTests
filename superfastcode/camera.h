@@ -1,6 +1,14 @@
 #pragma once
 #include "eigen_types.h"
 
+
+struct pyCamera {
+    Eigen::Ref<EiVector3d> camera_center;
+    Eigen::Ref<EiVector3d> pixel_00_center;
+    Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> matrix_pixel_spacing;
+};
+/*
+
 class Camera {
 public:
     EIGEN_MAKE_ALIGNED_OPERATOR_NEW; // Required for structures using Eigen members
@@ -29,3 +37,4 @@ private:
         const EiVector3d& basis_vector_up,
         const double& focal_length);
 };
+*/

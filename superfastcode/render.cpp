@@ -7,32 +7,40 @@
 
 
 // Global rendering parameters
-extern unsigned short image_width;
-extern unsigned short image_height;
-extern unsigned short number_of_samples;
-extern double aspect_ratio;
+//extern unsigned short image_width;
+//extern unsigned short image_height;
+//extern unsigned short number_of_samples;
+//extern double aspect_ratio;
 
 EiVector3d return_ray_color(const Ray& ray,
-    const pybind11::array_t<int>& connectivity,
-    const pybind11::array_t<double>& node_coords) {
+    const pybind11::list& list_of_meshes) {
     EiVectorD3d color_test(3, 3);
     color_test.row(0) << 1.0, 0.0, 0.0;
     color_test.row(1) << 0.0, 1.0, 1.0;
-    color_test.row(2) << 1.0, 0.0, 1.0; 
+    color_test.row(2) << 1.0, 0.0, 1.0;
     //node_coords_test.row(0) << 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0;
     //node_coords_test.row(1) <<  0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0;
     // Nodal coords; 4, but 4th isn't of interest
     HitRecord intersection_record; // Create HitRecord struct
-    IntersectionOutput intersection = intersect_plane(ray, connectivity, node_coords);
-    Eigen::Index minRowIndex, minColIndex;
 
-    intersection.t_values.minCoeff(&minRowIndex, &minColIndex); // Find indices of the smallest t_value
-    double closest_t = intersection.t_values(minRowIndex, minColIndex);
-    if (closest_t < intersection_record.t) {
-        intersection_record.t = closest_t;
-        intersection_record.barycentric_coordinates = intersection.barycentric_coordinates.row(minRowIndex);
-        intersection_record.point_intersection = ray_at_t(closest_t, ray);
-        intersection_record.normal_surface = intersection.plane_normals.row(minRowIndex);
+    // Iterate over the meshes in the passed scene list
+    for (pybind11::handle element : list_of_meshes) {
+        pybind11::dict mesh_dict = pybind11::cast<pybind11::dict>(element);
+        // Get the data from each mesh
+        pybind11::array_t<int> connectivity = pybind11::cast<pybind11::array_t<int>>(mesh_dict["connectivity"]);
+        pybind11::array_t<double> node_coords = pybind11::cast<pybind11::array_t<double>>(mesh_dict["coords"]);
+
+        IntersectionOutput intersection = intersect_plane(ray, connectivity, node_coords);
+        Eigen::Index minRowIndex, minColIndex;
+
+        intersection.t_values.minCoeff(&minRowIndex, &minColIndex); // Find indices of the smallest t_value
+        double closest_t = intersection.t_values(minRowIndex, minColIndex);
+        if (closest_t < intersection_record.t) {
+            intersection_record.t = closest_t;
+            intersection_record.barycentric_coordinates = intersection.barycentric_coordinates.row(minRowIndex);
+            intersection_record.point_intersection = ray_at_t(closest_t, ray);
+            intersection_record.normal_surface = intersection.plane_normals.row(minRowIndex);
+        }
     }
     if (intersection_record.t != std::numeric_limits<double>::infinity()) { // Instead of keeping a bool hit_anything, check if t value has changed from the default
         set_face_normal(ray, intersection_record.normal_surface);
@@ -48,24 +56,34 @@ EiVector3d return_ray_color(const Ray& ray,
     EiVector3d color = (1.0 - a) * white + a * blue;
     return color;
 }
-void render_ppm_image(const Camera& camera1,
-    const pybind11::array_t<int>& connectivity,
-    const pybind11::array_t<double>& node_coords){
-    
+//pybind11::bytes render_ppm_image(const Camera& camera1,
+void render_ppm_image(pyCamera& camera1,
+    //std::string render_ppm_image(const Camera& camera1,
+    const pybind11::list& list_of_meshes,
+    const int image_height,
+    const int image_width,
+    const int number_of_samples) {
 
+    // Get camera parameters from the dict and cast it to Eigen types so it works with existing code; by reference to avoid copying data
+    //Eigen::Ref<EiVector3d> camera_center = camera1["camera_center"].cast<Eigen::Ref<EiVector3d>>();
+    //Eigen::Ref<EiVector3d> pixel_00_center = camera1["pixel_00_center"].cast<Eigen::Ref<EiVector3d>>();
+    //Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> matrix_pixel_spacing = camera1["matrix_pixel_spacing"].cast<Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>();
+
+    //std::string buffer;
     std::vector<uint8_t> buffer;
     buffer.reserve(image_width * image_height * 12); // Preallocate memory for the image buffer (conservatively)
+    /*std::ofstream image_file;
 
-    //std::ofstream image_file;
-    /*
-    image_file.open("C:/Users/Student/test.ppm");
+    // WIP: Will have to make the filename change based on the camera number or some unique identifier, otherwise we will keep on overwriting the same file
+    image_file.open("test.ppm");
     if (!image_file.is_open()) {
         std::cerr << "Failed to open the output file.\n";
         return;
     }
-    
-    image_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";*/
-	//buffer += "P3\n" + std::to_string(image_width) + ' ' + std::to_string(image_height) + "\n255\n";
+
+    image_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    */
+    //buffer += "P3\n" + std::to_string(image_width) + ' ' + std::to_string(image_height) + "\n255\n";
     for (int j = 0; j < image_height; j++) {
         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
         for (int i = 0; i < image_width; i++) {
@@ -77,7 +95,8 @@ void render_ppm_image(const Camera& camera1,
                     (j + offset[1]) * camera1.matrix_pixel_spacing.row(1);
                 EiVector3d ray_direction = pixel_sample - camera1.camera_center;
                 Ray current_ray{ camera1.camera_center, ray_direction.normalized() };
-                pixel_color += return_ray_color(current_ray, connectivity, node_coords);
+                //pixel_color += return_ray_color(current_ray, connectivity, node_coords);
+                pixel_color += return_ray_color(current_ray, list_of_meshes);
             }
             double gray = 0.2126 * pixel_color[0] + 0.7152 * pixel_color[1] + 0.0722 * pixel_color[2];
             int gray_byte = int(gray / number_of_samples * 255.99);
@@ -85,10 +104,10 @@ void render_ppm_image(const Camera& camera1,
             buffer.push_back(static_cast<uint8_t>(gray_byte));
             buffer.push_back(static_cast<uint8_t>(gray_byte));
             buffer.push_back(static_cast<uint8_t>(gray_byte));
-            //buffer += std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + '\n';
             //image_file << gray_byte << ' ' << gray_byte << ' ' << gray_byte << '\n'; 
         }
     }
+
     std::ofstream image_file;
 
     // WIP: Will have to make the filename change based on the camera number or some unique identifier, otherwise we will keep on overwriting the same file
@@ -103,5 +122,5 @@ void render_ppm_image(const Camera& camera1,
 
     image_file.close();
     std::cout << "\r Done. \n";
-    
+    //return pybind11::bytes(buffer);
 }

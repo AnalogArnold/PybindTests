@@ -16,59 +16,44 @@
 #include <vector>
 #include <chrono>
 #include "eigen_types.h"
-#include "camera.h"
 #include "render.h"
 
 //////////////////////////////////// INPUT
-double aspect_ratio = 16.0 / 9.0;
-unsigned short image_width = 400; // px
-unsigned short image_height = static_cast<unsigned short>(image_width / aspect_ratio); // px
-unsigned short number_of_samples = 50; // For anti-aliasing. Really don't expect we'll need more than a short
+//double aspect_ratio = 16.0 / 9.0;
+//unsigned short image_width = 400; // px
+//unsigned short image_height = static_cast<unsigned short>(image_width / aspect_ratio); // px
+//unsigned short number_of_samples = 1; // For anti-aliasing. Really don't expect we'll need more than a short
 
 
 //std::cout << "rows" << sizeof edge0_arr / sizeof edge0_arr[0] << std::endl;
 //std::cout << "cols" << sizeof edge0_arr[0] / sizeof(double) << std::endl;
-/*
-int main() {
-    //Camera test_camera{EiVector3d(0, 1, 1), EiVector3d(0, 0, -1), 90};
-    Camera test_camera{ EiVector3d(-0.5, 1.1, 1.1), EiVector3d(0, 0, -1), 90 };
-    // Mesh from simdata. Copied by force for now.
-    }
 
-void process_list_of_dicts(py::list list_of_dicts) {
-    for (auto element : list_of_dicts) {
-        py::dict dict = py::cast<py::dict>(element);
-        // Process each dictionary
-        for (auto item : dict) {
-            // Access key-value pairs
-            py::print(item);
-
-        }
-    }
-}
-*/
 
 namespace py = pybind11;
 
-// WIP, ordering of this loop will not work for many meshes
-void process_list_of_dicts(py::list list_of_dicts) {
-    // Loop over the meshes in the scene
-    Camera test_camera{ EiVector3d(-0.5, 1.1, 1.1), EiVector3d(0, 0, -1), 90 };
-    py::array_t<int> connectivity;
-    py::array_t<double> node_coords;
+void render_scene(const int image_height,
+    const int image_width,
+    const int number_of_samples,
+    const py::list& list_of_meshes,
+    const py::list& list_of_cameras) {
 
-    for (auto element : list_of_dicts) {
-        py::dict dict = py::cast<py::dict>(element);
-        // Get the data from each mesh
-        connectivity = py::cast<py::array_t<int>>(dict["connectivity"]);
-        node_coords = py::cast<py::array_t<double>>(dict["coords"]);
+    // Camera test_camera{ EiVector3d(-0.5, 1.1, 1.1), EiVector3d(0, 0, -1), 90 };
+
+     // Iterate over all cameras and render an image for each
+    for (pybind11::handle element : list_of_cameras) {
+        pybind11::dict camera_data = pybind11::cast<pybind11::dict>(element);
+        // Get camera parameters from the dict and cast it to Eigen types so it works with existing code; by reference to avoid copying data
+        // Ideally we wouldn't need to create a new pyCamera and we'd just pass the dict around, but when I try to do that, it throws back an error casting NumPy array to a C++ object?
+        pyCamera test_camera{ camera_data["camera_center"].cast<Eigen::Ref<EiVector3d>>(),
+            camera_data["pixel_00_center"].cast<Eigen::Ref<EiVector3d>>(),
+            camera_data["matrix_pixel_spacing"].cast<Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>() };
+
+        // Get bytes from the render function and pass back to Python to write it to a file from there
+        //return render_ppm_image(test_camera, connectivity, node_coords);
+        render_ppm_image(test_camera, list_of_meshes, image_height, image_width, number_of_samples);
     }
-    // Get bytes from the render function and pass back to Python to write it to a file from there
-    render_ppm_image(test_camera, connectivity, node_coords);
-    
 }
 
-
 PYBIND11_MODULE(superfastcode, a) {
-    a.def("cpp_simdata_dictlist", &process_list_of_dicts);
+    a.def("cpp_render_scene", &render_scene);
 }

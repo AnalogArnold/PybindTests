@@ -15,16 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="previouscode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="test1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ray_intersection.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="render.cpp">
