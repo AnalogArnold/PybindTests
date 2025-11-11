@@ -48,13 +48,14 @@ EiVector3d return_ray_color(const Ray& ray,
     EiVector3d color = (1.0 - a) * white + a * blue;
     return color;
 }
-pybind11::bytes render_ppm_image(const Camera& camera1,
-//void render_ppm_image(const Camera& camera1,
+void render_ppm_image(const Camera& camera1,
     const pybind11::array_t<int>& connectivity,
     const pybind11::array_t<double>& node_coords){
     
-    std::string buffer;
-    buffer.reserve(37 + image_width * image_height * 12) // Preallocate memory for the image buffer (conservatively)
+
+    std::vector<uint8_t> buffer;
+    buffer.reserve(image_width * image_height * 12); // Preallocate memory for the image buffer (conservatively)
+
     //std::ofstream image_file;
     /*
     image_file.open("C:/Users/Student/test.ppm");
@@ -64,8 +65,7 @@ pybind11::bytes render_ppm_image(const Camera& camera1,
     }
     
     image_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";*/
-	buffer += "P3\n" + std::to_string(image_width) + ' ' + std::to_string(image_height) + "\n255\n";
-	//buffer << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+	//buffer += "P3\n" + std::to_string(image_width) + ' ' + std::to_string(image_height) + "\n255\n";
     for (int j = 0; j < image_height; j++) {
         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
         for (int i = 0; i < image_width; i++) {
@@ -82,11 +82,26 @@ pybind11::bytes render_ppm_image(const Camera& camera1,
             double gray = 0.2126 * pixel_color[0] + 0.7152 * pixel_color[1] + 0.0722 * pixel_color[2];
             int gray_byte = int(gray / number_of_samples * 255.99);
             //std::cout << gray_byte << ' ' << gray_byte << ' ' << gray_byte << '\n'; // Tested and it does write to the terminal, so why not to the file?
-			buffer += std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + '\n';
+            buffer.push_back(static_cast<uint8_t>(gray_byte));
+            buffer.push_back(static_cast<uint8_t>(gray_byte));
+            buffer.push_back(static_cast<uint8_t>(gray_byte));
+            //buffer += std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + ' ' + std::to_string(gray_byte) + '\n';
             //image_file << gray_byte << ' ' << gray_byte << ' ' << gray_byte << '\n'; 
         }
     }
-    //image_file.close();
+    std::ofstream image_file;
+
+    // WIP: Will have to make the filename change based on the camera number or some unique identifier, otherwise we will keep on overwriting the same file
+    image_file.open("test.ppm");
+    if (!image_file.is_open()) {
+        std::cerr << "Failed to open the output file.\n";
+        return;
+    }
+
+    image_file << "P6\n" << image_width << ' ' << image_height << "\n255\n";
+    image_file.write(reinterpret_cast<const char*>(buffer.data()), buffer.size());
+
+    image_file.close();
     std::cout << "\r Done. \n";
-    return pybind11::bytes(buffer);
+    
 }

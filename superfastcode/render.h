@@ -15,7 +15,7 @@ EiVector3d return_ray_color(const Ray& ray,
     const pybind11::array_t<int>& connectivity,
     const pybind11::array_t<double>& node_coords);
 
-pybind11::bytes render_ppm_image(const Camera& camera1,
+void render_ppm_image(const Camera& camera1,
 //void render_ppm_image(const Camera& camera1,
     const pybind11::array_t<int>& connectivity,
     const pybind11::array_t<double>& node_coords);

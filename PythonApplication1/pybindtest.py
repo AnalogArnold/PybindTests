@@ -3,6 +3,7 @@ import numpy as np
 from dataclasses import dataclass, field
 
 import pyvale.dataset as dataset
+import timeit
 
 from camera import Camera
 from simdata_loader import get_mesh_data
@@ -44,5 +45,5 @@ scene.append(rect_block)
 
 
 from superfastcode import cpp_simdata_dictlist
-with (open("image.ppm", "wb") as f):
-    f.write(cpp_simdata_dictlist(scene))
+
+print(timeit.timeit("cpp_simdata_dictlist(scene)", globals=globals(), number=1))
