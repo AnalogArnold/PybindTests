@@ -5,9 +5,9 @@
 #include <fstream>
 #include <iostream>
 
-EiVector3d return_ray_color(const Ray& ray,
-    const std::vector < pybind11::array_t<double>>& scene_coords,
-    const std::vector < pybind11::array_t<int>>& scene_connectivity) {
+EiVector3d return_ray_color(const Ray &ray,
+    const std::vector < pybind11::array_t<int>> &scene_connectivity,
+    const std::vector < pybind11::array_t<double>> &scene_coords) {
     EiVectorD3d color_test(3, 3);
     color_test.row(0) << 1.0, 0.0, 0.0;
     color_test.row(1) << 0.0, 1.0, 1.0;
@@ -51,11 +51,11 @@ EiVector3d return_ray_color(const Ray& ray,
     return color;
 }
 
-void render_ppm_image(const Eigen::Ref<const EiVector3d>& camera_center,
-    const Eigen::Ref<const EiVector3d>& pixel_00_center,
-    const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>& matrix_pixel_spacing,
-    const std::vector < pybind11::array_t<double>>& scene_coords,
-    const std::vector < pybind11::array_t<int>>& scene_connectivity,
+void render_ppm_image(const Eigen::Ref<const EiVector3d> &camera_center,
+    const Eigen::Ref<const EiVector3d> &pixel_00_center,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> &matrix_pixel_spacing,
+    const std::vector < pybind11::array_t<int>> &scene_connectivity,
+    const std::vector < pybind11::array_t<double>> &scene_coords,
     const int image_height,
     const int image_width,
     const int number_of_samples) {
@@ -76,7 +76,7 @@ void render_ppm_image(const Eigen::Ref<const EiVector3d>& camera_center,
                 EiVector3d ray_direction = pixel_sample - camera_center;
                 Ray current_ray{ camera_center, ray_direction.normalized() };
                 //pixel_color += return_ray_color(current_ray, connectivity, node_coords);
-                pixel_color += return_ray_color(current_ray, scene_coords, scene_connectivity);
+                pixel_color += return_ray_color(current_ray, scene_connectivity, scene_coords);
             }
             double gray = 0.2126 * pixel_color[0] + 0.7152 * pixel_color[1] + 0.0722 * pixel_color[2];
             int gray_byte = int(gray / number_of_samples * 255.99);

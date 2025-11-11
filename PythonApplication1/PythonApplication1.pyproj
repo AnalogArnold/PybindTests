@@ -24,6 +24,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="camera.py" />
+    <Compile Include="scene.py" />
     <Compile Include="simdata_loader.py" />
     <Compile Include="pybindtest.py" />
   </ItemGroup>

@@ -1,6 +1,7 @@
 from email.mime import image
 import numpy as np
 from math import tan, radians
+import scene
 
 # Utility function used across the code below
 def normalise_vector(vector: np.ndarray) -> np.ndarray:
@@ -70,13 +71,6 @@ class Camera:
         self.viewport_upper_left = self.camera_center - basis_vector_forward - vector_viewport_x_axis / 2 - vector_viewport_y_axis / 2
         self.pixel_00_center = self.viewport_upper_left + 0.5 * (vector_pixel_spacing_x + vector_pixel_spacing_y)
 
-
-def repack_camera_data(camera: Camera) -> dict:
-    '''Repackages the camera data into a dictionary for easier access in C++.'''
-    camera_data = {
-        "camera_center": camera.camera_center,
-        "pixel_00_center": camera.pixel_00_center,
-        "matrix_pixel_spacing": camera.matrix_pixel_spacing
-        #"matrix_world_to_camera": camera.matrix_world_to_camera
-    }
-    return camera_data
+    def add_camera_to_scene(self, scene) -> None:
+        '''Adds the camera to the scene dataclass.'''
+        scene.add_camera(self.camera_center, self.pixel_00_center, self.matrix_pixel_spacing)
