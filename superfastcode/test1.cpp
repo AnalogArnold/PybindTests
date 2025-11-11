@@ -44,25 +44,23 @@ void render_scene(const int image_height,
         pybind11::dict camera_data = pybind11::cast<pybind11::dict>(element);
         // Get camera parameters from the dict and cast it to Eigen types so it works with existing code; by reference to avoid copying data
         // Ideally we wouldn't need to create a new pyCamera and we'd just pass the dict around, but when I try to do that, it throws back an error casting NumPy array to a C++ object?
+       /*
         pyCamera test_camera{ camera_data["camera_center"].cast<Eigen::Ref<EiVector3d>>(),
             camera_data["pixel_00_center"].cast<Eigen::Ref<EiVector3d>>(),
             camera_data["matrix_pixel_spacing"].cast<Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>() };
 
-        /*
-        // Iterate over the meshes in the passed scene list
-        std::cout << &list_of_meshes << std::endl;
-        for (pybind11::handle element : list_of_meshes) {
-            pybind11::dict mesh_dict = pybind11::cast<pybind11::dict>(element);
-            // Get the data from each mesh
-            pybind11::array_t<int> connectivity = pybind11::cast<pybind11::array_t<int>>(mesh_dict["connectivity"]);
-            pybind11::array_t<double> node_coords = pybind11::cast<pybind11::array_t<double>>(mesh_dict["coords"]);
-        }
+        */
         // Get bytes from the render function and pass back to Python to write it to a file from there
         //return render_ppm_image(test_camera, connectivity, node_coords);
-        */
+
+        Eigen::Ref<const EiVector3d> camera_center = camera_data["camera_center"].cast<Eigen::Ref<const EiVector3d>>();
+        Eigen::Ref<const EiVector3d> pixel_00_center = camera_data["pixel_00_center"].cast<Eigen::Ref<const EiVector3d>>();
+		Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> matrix_pixel_spacing = camera_data["matrix_pixel_spacing"].cast<Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>();
 
 
-        render_ppm_image(test_camera, list_of_meshes, image_height, image_width, number_of_samples);
+
+
+        render_ppm_image(camera_center, pixel_00_center, matrix_pixel_spacing, list_of_meshes, image_height, image_width, number_of_samples);
     }
 }
 

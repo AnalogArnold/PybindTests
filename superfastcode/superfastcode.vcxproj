@@ -144,7 +144,6 @@
     <ClCompile Include="test1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
     <ClInclude Include="eigen_types.h" />
     <ClInclude Include="hit_record.h" />
     <ClInclude Include="math_utils.h" />

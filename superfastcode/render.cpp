@@ -5,13 +5,6 @@
 #include <fstream>
 #include <iostream>
 
-
-// Global rendering parameters
-//extern unsigned short image_width;
-//extern unsigned short image_height;
-//extern unsigned short number_of_samples;
-//extern double aspect_ratio;
-
 EiVector3d return_ray_color(const Ray& ray,
     const pybind11::list& list_of_meshes) {
     EiVectorD3d color_test(3, 3);
@@ -61,17 +54,23 @@ EiVector3d return_ray_color(const Ray& ray,
     return color;
 }
 //pybind11::bytes render_ppm_image(const Camera& camera1,
+/*
 void render_ppm_image(pyCamera& camera1,
     //std::string render_ppm_image(const Camera& camera1,
     const pybind11::list& list_of_meshes,
     const int image_height,
     const int image_width,
     const int number_of_samples) {
-
+*/
+void render_ppm_image(const Eigen::Ref<const EiVector3d>&camera_center,
+	const Eigen::Ref<const EiVector3d>&pixel_00_center,
+	const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> &matrix_pixel_spacing,
+    //std::string render_ppm_image(const Camera& camera1,
+    const pybind11::list& list_of_meshes,
+    const int image_height,
+    const int image_width,
+    const int number_of_samples) {
     // Get camera parameters from the dict and cast it to Eigen types so it works with existing code; by reference to avoid copying data
-    //Eigen::Ref<EiVector3d> camera_center = camera1["camera_center"].cast<Eigen::Ref<EiVector3d>>();
-    //Eigen::Ref<EiVector3d> pixel_00_center = camera1["pixel_00_center"].cast<Eigen::Ref<EiVector3d>>();
-    //Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> matrix_pixel_spacing = camera1["matrix_pixel_spacing"].cast<Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>();
 
     //std::string buffer;
     std::vector<uint8_t> buffer;
@@ -94,11 +93,11 @@ void render_ppm_image(pyCamera& camera1,
             EiVector3d pixel_color = EiVector3d::Zero();
             for (int k = 0; k < number_of_samples; k++) {
                 double offset[2] = { random_double() - 0.5, random_double() - 0.5 };
-                EiVector3d pixel_sample = camera1.pixel_00_center +
-                    (i + offset[0]) * camera1.matrix_pixel_spacing.row(0) +
-                    (j + offset[1]) * camera1.matrix_pixel_spacing.row(1);
-                EiVector3d ray_direction = pixel_sample - camera1.camera_center;
-                Ray current_ray{ camera1.camera_center, ray_direction.normalized() };
+                EiVector3d pixel_sample = pixel_00_center +
+                    (i + offset[0]) * matrix_pixel_spacing.row(0) +
+                    (j + offset[1]) * matrix_pixel_spacing.row(1);
+                EiVector3d ray_direction = pixel_sample - camera_center;
+                Ray current_ray{ camera_center, ray_direction.normalized() };
                 //pixel_color += return_ray_color(current_ray, connectivity, node_coords);
                 pixel_color += return_ray_color(current_ray, list_of_meshes);
             }

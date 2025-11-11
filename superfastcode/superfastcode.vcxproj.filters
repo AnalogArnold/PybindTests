@@ -41,9 +41,6 @@
     <ClInclude Include="ray_intersection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="render.h">
       <Filter>Header Files</Filter>
     </ClInclude>
