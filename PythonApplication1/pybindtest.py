@@ -13,7 +13,7 @@ from simdata_loader import get_mesh_data
 image_width = 400  # px
 aspect_ratio = 16.0 / 9.0
 image_height = int(image_width / aspect_ratio)  # px
-number_of_samples = 50; # for anti-aliasing
+number_of_samples = 25; # for anti-aliasing
 # Assume single camera for now - but can be extended to multiple cameras later
 camera_center = np.array([-0.5, 1.1, 1.1])
 camera_target = np.array([0, 0, -1])
@@ -56,7 +56,11 @@ scene.append(rect_block)
 #print(rect_block['face_colors'].flags['C_CONTIGUOUS'])
 
 from superfastcode import cpp_render_scene
-#cpp_render_scene(image_height, image_width, number_of_samples, scene, cameras)
-#with (open("image.ppm", "wb") as f):
-#    f.write(cpp_simdata_dictlist(scene))
-print(timeit.timeit("cpp_render_scene(image_height, image_width, number_of_samples, scene, cameras)", globals=globals(), number=1))
+#print(timeit.timeit("cpp_render_scene(image_height, image_width, number_of_samples, scene, cameras)", globals=globals(), number=1))
+
+
+# TESTING SECTION: try passing arrays of arrays instead of list of dictionaries of arrays to see if performance improves
+# Not the most efficient way to do it, but works for testing purposes
+scene_coords = [mesh["coords"] for mesh in scene]
+scene_connectivity = [mesh["connectivity"] for mesh in scene]
+print(timeit.timeit("cpp_render_scene(image_height, image_width, number_of_samples, scene_coords, scene_connectivity, cameras)", globals=globals(), number=1))

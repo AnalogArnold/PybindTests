@@ -11,15 +11,15 @@
 #include "camera.h"
 #include "ray.h"
 
-
 EiVector3d return_ray_color(const Ray& ray,
-    const pybind11::list& list_of_meshes);
+    const std::vector < pybind11::array_t<double>>& scene_coords,
+    const std::vector < pybind11::array_t<int>>& scene_connectivity);
 
 void render_ppm_image(const Eigen::Ref<const EiVector3d>& camera_center,
     const Eigen::Ref<const EiVector3d>& pixel_00_center,
     const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>& matrix_pixel_spacing,
-    //std::string render_ppm_image(const Camera& camera1,
-    const pybind11::list& list_of_meshes,
+    const std::vector < pybind11::array_t<double>> &scene_coords,
+    const std::vector < pybind11::array_t<int>>& scene_connectivity,
     const int image_height,
     const int image_width,
     const int number_of_samples);

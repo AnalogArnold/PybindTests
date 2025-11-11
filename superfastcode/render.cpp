@@ -6,22 +6,20 @@
 #include <iostream>
 
 EiVector3d return_ray_color(const Ray& ray,
-    const pybind11::list& list_of_meshes) {
+    const std::vector < pybind11::array_t<double>>& scene_coords,
+    const std::vector < pybind11::array_t<int>>& scene_connectivity) {
     EiVectorD3d color_test(3, 3);
     color_test.row(0) << 1.0, 0.0, 0.0;
     color_test.row(1) << 0.0, 1.0, 1.0;
     color_test.row(2) << 1.0, 0.0, 1.0;
-    //node_coords_test.row(0) << 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0;
-    //node_coords_test.row(1) <<  0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 1.0;
-    // Nodal coords; 4, but 4th isn't of interest
     HitRecord intersection_record; // Create HitRecord struct
 
-    // Iterate over the meshes in the passed scene list
-    for (pybind11::handle element : list_of_meshes) {
-        pybind11::dict mesh_dict = pybind11::cast<pybind11::dict>(element);
-        // Get the data from each mesh
-        pybind11::array_t<int> connectivity = pybind11::cast<pybind11::array_t<int>>(mesh_dict["connectivity"]);
-        pybind11::array_t<double> node_coords = pybind11::cast<pybind11::array_t<double>>(mesh_dict["coords"]);
+    size_t num_meshes = scene_coords.size();
+
+    for (size_t mesh_idx = 0; mesh_idx < num_meshes; ++mesh_idx) {
+        pybind11::array_t<double> node_coords = scene_coords[mesh_idx];
+        pybind11::array_t<int> connectivity = scene_connectivity[mesh_idx];
+
 
         long long number_of_elements = connectivity.shape()[0]; // number of triangles/faces, will give us indices for some bits
         double* node_coords_ptr = static_cast<double*>(node_coords.request().ptr);
@@ -41,7 +39,6 @@ EiVector3d return_ray_color(const Ray& ray,
     }
     if (intersection_record.t != std::numeric_limits<double>::infinity()) { // Instead of keeping a bool hit_anything, check if t value has changed from the default
         set_face_normal(ray, intersection_record.normal_surface);
-        //std::cout<<"hit sth"<<std::endl;
         return intersection_record.barycentric_coordinates(0) * color_test.row(0) + intersection_record.barycentric_coordinates(1) * color_test.row(2) + intersection_record.barycentric_coordinates(2) * color_test.row(2);
         //return color
     }
@@ -53,40 +50,20 @@ EiVector3d return_ray_color(const Ray& ray,
     EiVector3d color = (1.0 - a) * white + a * blue;
     return color;
 }
-//pybind11::bytes render_ppm_image(const Camera& camera1,
-/*
-void render_ppm_image(pyCamera& camera1,
-    //std::string render_ppm_image(const Camera& camera1,
-    const pybind11::list& list_of_meshes,
-    const int image_height,
-    const int image_width,
-    const int number_of_samples) {
-*/
-void render_ppm_image(const Eigen::Ref<const EiVector3d>&camera_center,
-	const Eigen::Ref<const EiVector3d>&pixel_00_center,
-	const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>> &matrix_pixel_spacing,
-    //std::string render_ppm_image(const Camera& camera1,
-    const pybind11::list& list_of_meshes,
+
+void render_ppm_image(const Eigen::Ref<const EiVector3d>& camera_center,
+    const Eigen::Ref<const EiVector3d>& pixel_00_center,
+    const Eigen::Ref<const Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>& matrix_pixel_spacing,
+    const std::vector < pybind11::array_t<double>>& scene_coords,
+    const std::vector < pybind11::array_t<int>>& scene_connectivity,
     const int image_height,
     const int image_width,
     const int number_of_samples) {
     // Get camera parameters from the dict and cast it to Eigen types so it works with existing code; by reference to avoid copying data
 
-    //std::string buffer;
     std::vector<uint8_t> buffer;
     buffer.reserve(image_width * image_height * 12); // Preallocate memory for the image buffer (conservatively)
-    /*std::ofstream image_file;
-
-    // WIP: Will have to make the filename change based on the camera number or some unique identifier, otherwise we will keep on overwriting the same file
-    image_file.open("test.ppm");
-    if (!image_file.is_open()) {
-        std::cerr << "Failed to open the output file.\n";
-        return;
-    }
-
-    image_file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    */
-    //buffer += "P3\n" + std::to_string(image_width) + ' ' + std::to_string(image_height) + "\n255\n";
+  
     for (int j = 0; j < image_height; j++) {
         std::clog << "\rScanlines remaining: " << (image_height - j) << ' ' << std::flush;
         for (int i = 0; i < image_width; i++) {
@@ -99,15 +76,13 @@ void render_ppm_image(const Eigen::Ref<const EiVector3d>&camera_center,
                 EiVector3d ray_direction = pixel_sample - camera_center;
                 Ray current_ray{ camera_center, ray_direction.normalized() };
                 //pixel_color += return_ray_color(current_ray, connectivity, node_coords);
-                pixel_color += return_ray_color(current_ray, list_of_meshes);
+                pixel_color += return_ray_color(current_ray, scene_coords, scene_connectivity);
             }
             double gray = 0.2126 * pixel_color[0] + 0.7152 * pixel_color[1] + 0.0722 * pixel_color[2];
             int gray_byte = int(gray / number_of_samples * 255.99);
-            //std::cout << gray_byte << ' ' << gray_byte << ' ' << gray_byte << '\n'; // Tested and it does write to the terminal, so why not to the file?
             buffer.push_back(static_cast<uint8_t>(gray_byte));
             buffer.push_back(static_cast<uint8_t>(gray_byte));
             buffer.push_back(static_cast<uint8_t>(gray_byte));
-            //image_file << gray_byte << ' ' << gray_byte << ' ' << gray_byte << '\n'; 
         }
     }
 
