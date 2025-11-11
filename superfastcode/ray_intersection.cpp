@@ -23,6 +23,9 @@ IntersectionOutput intersect_plane(const Ray& ray,
     const pybind11::array_t<double>& node_coords) {
 
     long long number_of_elements = connectivity.shape()[0]; // number of triangles/faces, will give us indices for some bits
+	double* node_coords_ptr = static_cast<double*>(node_coords.request().ptr);
+	int* connectivity_ptr = static_cast<int*>(connectivity.request().ptr);
+
     // Ray data broadcasted to use in vectorised operations on matrices
     // This is faster than doing it in a loop
     EiVectorD3d ray_directions = ray.direction.replicate(number_of_elements, 1);
@@ -39,18 +42,23 @@ IntersectionOutput intersect_plane(const Ray& ray,
     EiMatrixDd edge0(number_of_elements, 3), nEdge2(number_of_elements, 3); // shape (faces, 3) each
     Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>  nodes0(number_of_elements, 3);
     for (int i = 0; i < number_of_elements; i++) {
-        int node_0 = connectivity.at(i, 0);
-        int node_1 = connectivity.at(i, 1);
-        int node_2 = connectivity.at(i, 2);
+        //int node_0 = connectivity.at(i, 0);
+        //int node_1 = connectivity.at(i, 1);
+        //int node_2 = connectivity.at(i, 2);
+		// Pass as a pointer now - means we treat the 2D array as a flat 1D array and do the indexing manually by calculating the offset.
+		// HAS to be contiguous in memory for this to work properly!
+		int node_0 = connectivity_ptr[i * 3 + 0];
+		int node_1 = connectivity_ptr[i * 3 + 1];
+		int node_2 = connectivity_ptr[i * 3 + 2];
         for (int j = 0; j < 3; j++) {
             //std::cout<<node_coords_arr[i][j] << " ";
-            edge0(i, j) = node_coords.at(node_1, j) - node_coords.at(node_0, j);
-            //edge0(i, j) = node_coords[node_1][j] - node_coords[node_0][j];
-            //nodes0(i, j) = node_coords[node_0][j];
-            nodes0(i, j) = node_coords.at(node_0, j);
+            //edge0(i, j) = node_coords.at(node_1, j) - node_coords.at(node_0, j);
+			edge0(i, j) = node_coords_ptr[node_1 * 3 + j] - node_coords_ptr[node_0 * 3 + j];
+            //nodes0(i, j) = node_coords.at(node_0, j);
+			nodes0(i, j) = node_coords_ptr[node_0 * 3 + j];
             // Skip edge1 because it never gets used in the calculations anyway
-            //nEdge2(i, j) = node_coords[node_2][j] - node_coords[node_0][j];
-            nEdge2(i, j) = node_coords.at(node_2, j) - node_coords.at(node_0, j);
+            //nEdge2(i, j) = node_coords.at(node_2, j) - node_coords.at(node_0, j);
+			nEdge2(i, j) = node_coords_ptr[node_2 * 3 + j] - node_coords_ptr[node_0 * 3 + j];
         }
     }
     EiVectorD3d plane_normals = cross_rowwise(edge0, nEdge2); // not normalised! Shape (faces, 3)

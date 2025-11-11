@@ -48,8 +48,20 @@ void render_scene(const int image_height,
             camera_data["pixel_00_center"].cast<Eigen::Ref<EiVector3d>>(),
             camera_data["matrix_pixel_spacing"].cast<Eigen::Ref<Eigen::Matrix<double, 2, 3, Eigen::StorageOptions::RowMajor>>>() };
 
+        /*
+        // Iterate over the meshes in the passed scene list
+        std::cout << &list_of_meshes << std::endl;
+        for (pybind11::handle element : list_of_meshes) {
+            pybind11::dict mesh_dict = pybind11::cast<pybind11::dict>(element);
+            // Get the data from each mesh
+            pybind11::array_t<int> connectivity = pybind11::cast<pybind11::array_t<int>>(mesh_dict["connectivity"]);
+            pybind11::array_t<double> node_coords = pybind11::cast<pybind11::array_t<double>>(mesh_dict["coords"]);
+        }
         // Get bytes from the render function and pass back to Python to write it to a file from there
         //return render_ppm_image(test_camera, connectivity, node_coords);
+        */
+
+
         render_ppm_image(test_camera, list_of_meshes, image_height, image_width, number_of_samples);
     }
 }

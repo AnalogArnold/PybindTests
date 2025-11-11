@@ -13,7 +13,7 @@ from simdata_loader import get_mesh_data
 image_width = 400  # px
 aspect_ratio = 16.0 / 9.0
 image_height = int(image_width / aspect_ratio)  # px
-number_of_samples = 1; # for anti-aliasing
+number_of_samples = 50; # for anti-aliasing
 # Assume single camera for now - but can be extended to multiple cameras later
 camera_center = np.array([-0.5, 1.1, 1.1])
 camera_target = np.array([0, 0, -1])
