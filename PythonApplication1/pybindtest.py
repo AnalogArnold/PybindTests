@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 import pyvale.dataset as dataset
 import timeit
 
-from camera import Camera, repack_camera_data
+from camera import Camera
 from simdata_loader import add_mesh_to_scene
 from scene import Scene
 
@@ -14,7 +14,7 @@ from scene import Scene
 image_width = 400  # px
 aspect_ratio = 16.0 / 9.0
 image_height = int(image_width / aspect_ratio)  # px
-number_of_samples = 50; # for anti-aliasing
+number_of_samples = 1; # for anti-aliasing
 # Assume single camera for now - but can be extended to multiple cameras later
 camera_center = np.array([-0.5, 1.1, 1.1])
 camera_target = np.array([0, 0, -1])
@@ -32,8 +32,8 @@ scene = Scene()
 # Create a camera
 camera1 = Camera(image_width, image_height, camera_center, camera_target, angle_vertical_view) # Camera for tests
 #camera1 = Camera(image_width, image_height) # Default camera (parameters i.e., at world origin, no funny angles) for tests
-cameras = list()
-cameras.append(repack_camera_data(camera1))
+#cameras = list()
+#cameras.append(repack_camera_data(camera1))
 camera1.add_camera_to_scene(scene);
 
 # Load sample data file with a simple rectangular block in 3D to test image rendering algorithm. Returns a file path to an exodus file
@@ -44,7 +44,7 @@ add_mesh_to_scene(scene, data_path)
 
 # Lights - to be added later
 
-
+#print(scene.scene_face_colors[0].shape)
+#print(scene.scene_face_colors)
 from superfastcode import cpp_render_scene
-
-print(timeit.timeit("cpp_render_scene(image_height, image_width, number_of_samples, scene.scene_connectivity, scene.scene_coords, scene.scene_camera_center, scene.scene_pixel_00_center, scene.scene_matrix_pixel_spacing)", globals=globals(), number=1))
+print(timeit.timeit("cpp_render_scene(image_height, image_width, number_of_samples, scene.scene_connectivity, scene.scene_coords, scene.scene_face_colors, scene.scene_camera_center, scene.scene_pixel_00_center, scene.scene_matrix_pixel_spacing)", globals=globals(), number=1))
